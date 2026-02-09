@@ -1,0 +1,11 @@
+__pycache__
+
+.env
+
+/server/responses.db
+
+# exclude everything
+/server/responses/*
+
+# exception to the rule
+!/server/responses/.gitkeep 
