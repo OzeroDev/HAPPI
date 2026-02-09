@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Signature Pad</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #send {
+            background-color: #04AA6D; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .char-count {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .left {
+            margin-top: 0px;
+            text-align: start;
+        }
+
+        h4 {
+            margin: 10px 0;
+        }
+        h3 {
+            margin: 0;
+        }
+
+        h5{
+            text-align: start;
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
+        #textInput {
+            margin-top: 0;
+        }
+        .center {
+            text-align: center;
+        }
+
+        .rs {
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Background Video -->
+    <video id="background-video" autoplay loop muted>
+        <source src="/backgroundVideo.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <h1 class="center">HAPPI Text/Image Response
+    </h1>
+
+    <div class="container">
+        <h3 class="left">Prompt:</h3>
+        <div><h4></h4></div>
+
+        <h3 class="left rs">Respond with Text, Image, or Both</h3>
+        <div><h5>Enter text:</h5></div>
+        <input type="text" id="textInput" class="left" maxlength="64" placeholder="Type something here...">
+        <div id="charCount" class="char-count">0/64</div>
+
+        <div><h5>Upload image:</h5></div>
+        <div class="left">
+            <input accept="image/*" class="left" type="file" id="myFile" name="filename">
+        </div>
+        <button id="send">Spread Positivity (Send)</button>
+    </div>
+
+
+    <script>
+
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const maxLength = textInput.getAttribute('maxlength');
+
+        textInput.addEventListener('input', function() {
+            const currentLength = textInput.value.length;
+            charCount.textContent = `${currentLength}/${maxLength}`;
+        });
+
+
+        fetch('https://mongoose-full-barely.ngrok-free.app/get_prompt', {
+            method: "GET",
+            headers: new Headers({
+                "ngrok-skip-browser-warning": "1",
+            })
+        }).then(res => {
+            return res.json()
+        }).then(data => {
+            console.log(data);
+            document.querySelector('h4').innerText = data.prompt;
+        });
+
+
+        // Handle the send button click
+        document.getElementById('send').addEventListener('click', async function() {
+            const text = textInput.value;
+            const fileInput = document.getElementById('myFile');
+            const file = fileInput.files[0];
+
+            if (!text && !file) {
+                alert("Please enter text or upload an image.");
+                return;
+            }
+
+            try {
+                if (!file){
+                    
+                    const data = {
+                        text: text,
+                        prompt: document.querySelector('h4').innerText,
+                    };
+
+                    // Send POST request
+                    fetch('https://mongoose-full-barely.ngrok-free.app/add_qr_response', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            "ngrok-skip-browser-warning": "1",
+                            'dtype': 'text'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        console.log('Success:', result);
+                        location.reload();
+                        alert("Your response has been sent to HAPPI!");
+                        // Handle success (e.g., show a message to the user)
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("An error occurred while sending the data.");
+                    });
+
+                } else {
+
+                    // Convert the file to base64
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        const base64Image = reader.result.split(',')[1]; // Get the base64 part without data URL prefix
+
+                        const data = {
+                            image: base64Image,
+                            prompt: document.querySelector('h4').innerText
+                        };
+
+                        if (text){
+                            data.text = text
+                        }
+
+                        // Send POST request
+                        fetch('https://mongoose-full-barely.ngrok-free.app/add_qr_response', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                "ngrok-skip-browser-warning": "1",
+                                'dtype': (text ? 'both' : 'img')
+                            },
+                            body: JSON.stringify(data)
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            console.log('Success:', result);
+                            location.reload();
+                            alert("Your response has been sent to HAPPI!");
+                            // Handle success (e.g., show a message to the user)
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("An error occurred while sending the data.");
+                        });
+                    };
+
+                    // Read the file as base64
+                    reader.readAsDataURL(file);
+
+
+
+                }
+
+            } catch (error) {
+                console.error("Error converting image to Base64:", error);
+                alert("An error occurred while converting the image.");
+            }
+        });
+
+    </script>
+</body>
+</html>
