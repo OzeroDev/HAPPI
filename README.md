@@ -77,4 +77,4 @@ HAPPI addresses the UN Sustainable Development Goal 3.4 (promote mental health a
 
 ---
 
-*Developed entirely by Justin Mehes at the University of Minnesota*
+*Codebase entirely by Justin Mehes at the University of Minnesota*
